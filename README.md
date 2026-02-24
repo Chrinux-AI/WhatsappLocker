@@ -102,3 +102,4 @@ The compiled APK will be at `app/build/outputs/apk/debug/app-debug.apk`. Copy it
 ---
 
 *(Note: Web App versions (PWAs) are fundamentally restricted by standard browser security sandboxing mechanisms and cannot monitor the Android OS task list to build an overlay tracker. Therefore this solution strictly relies on Native Android components).*
+# WhatsappLocker
