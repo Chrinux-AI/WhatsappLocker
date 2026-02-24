@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WhatsApp Locker</string>
+    <string name="enable_locker">Enable App Locker</string>
+    <string name="set_pin">Set PIN</string>
+    <string name="grant_permissions">Grant System Permissions</string>
+    <string name="permissions_granted">Permissions Granted!</string>
+    <string name="unlock">Unlock</string>
+    <string name="enter_pin">Enter your PIN</string>
+    <string name="incorrect_pin">Incorrect PIN</string>
+    <string name="add_app">Add Custom App Package</string>
+</resources>
