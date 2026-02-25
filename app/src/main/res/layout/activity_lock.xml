@@ -1,58 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:background="@color/black"
-    android:padding="32dp">
+    android:background="@drawable/bg_dashboard_gradient"
+    android:padding="20dp">
 
-    <ImageView
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:src="@android:drawable/ic_secure"
-        android:layout_marginBottom="24dp"
-        android:tint="@color/accent"/>
-
-    <TextView
-        android:id="@+id/tvAppName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="App Locked"
-        android:textSize="22sp"
-        android:textColor="@color/white"
-        android:textStyle="bold"
-        android:layout_marginBottom="32dp"/>
-
-    <EditText
-        android:id="@+id/etPin"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/enter_pin"
-        android:textColorHint="#AAAAAA"
-        android:textColor="@color/white"
-        android:inputType="numberPassword"
-        android:maxLength="8"
-        android:gravity="center"
-        android:textSize="24sp"
-        android:layout_marginBottom="24dp"/>
+        android:layout_gravity="center"
+        android:background="@drawable/bg_lock_card"
+        android:elevation="5dp"
+        android:orientation="vertical"
+        android:padding="20dp">
 
-    <Button
-        android:id="@+id/btnUnlock"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/unlock"
-        android:textSize="18sp"
-        android:padding="12dp"
-        android:backgroundTint="@color/primary"/>
+        <TextView
+            android:id="@+id/tvAppName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_locked"
+            android:textColor="@color/text_primary"
+            android:textSize="24sp"
+            android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/tvError"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/incorrect_pin"
-        android:textColor="#FF5252"
-        android:visibility="invisible"
-        android:layout_marginTop="16dp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/app_locked_subtitle"
+            android:textColor="@color/text_secondary" />
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/tvMode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/unlock_mode_placeholder"
+            android:textColor="@color/primary"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/etCredential"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:hint="@string/enter_credential"
+            android:inputType="textPassword" />
+
+        <Button
+            android:id="@+id/btnUnlock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:backgroundTint="@color/primary"
+            android:text="@string/unlock"
+            android:textColor="@color/white" />
+
+        <TextView
+            android:id="@+id/tvError"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/incorrect_credential"
+            android:textColor="@color/error_red"
+            android:visibility="gone" />
+    </LinearLayout>
+
+</FrameLayout>

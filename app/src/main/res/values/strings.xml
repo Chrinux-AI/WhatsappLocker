@@ -1,12 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">WhatsApp Locker</string>
-    <string name="enable_locker">Enable App Locker</string>
-    <string name="set_pin">Set PIN</string>
-    <string name="grant_permissions">Grant System Permissions</string>
-    <string name="permissions_granted">Permissions Granted!</string>
+    <string name="app_name">WhatsApp Business Locker</string>
+    <string name="dashboard_title">WhatsApp Business Locker</string>
+    <string name="dashboard_subtitle">Focused protection for WhatsApp Business with optional extra app locking.</string>
+    <string name="enable_locker">Enable Locker</string>
+    <string name="grant_permissions">Grant Usage + Overlay Permissions</string>
+    <string name="set_lock_credential">Set lock credential</string>
+    <string name="lock_method">Lock method</string>
+    <string name="timeout_seconds">Auto-unlock timeout (seconds)</string>
+    <string name="locked_apps">Lock targets</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="add">Add</string>
     <string name="unlock">Unlock</string>
-    <string name="enter_pin">Enter your PIN</string>
-    <string name="incorrect_pin">Incorrect PIN</string>
-    <string name="add_app">Add Custom App Package</string>
+    <string name="app_locked">App Locked</string>
+    <string name="app_locked_subtitle">Enter your credential to continue.</string>
+    <string name="enter_credential">Enter credential</string>
+    <string name="incorrect_credential">Incorrect credential</string>
+    <string name="unlock_mode_placeholder">Unlock mode</string>
+    <string name="unlock_mode_label">Method: %1$s</string>
+    <string name="error_set_credential">Please set credential first.</string>
+    <string name="error_grant_permissions">Grant usage and overlay permissions first.</string>
+    <string name="credential_saved">Credential saved securely.</string>
+    <string name="invalid_credential">Invalid credential for selected method.</string>
+    <string name="invalid_timeout">Timeout must be at least 5 seconds.</string>
+    <string name="timeout_saved">Timeout saved.</string>
+    <string name="invalid_package">Enter a valid Android package name.</string>
+    <string name="custom_app_added">Added lock target: %1$s</string>
+    <string name="notification_channel_name">WhatsApp Locker Monitor</string>
+    <string name="notification_title">WhatsApp Business Locker active</string>
+    <string name="notification_text">Monitoring foreground apps for lock enforcement.</string>
+    <string name="security_settings">Security settings</string>
+    <string name="apps_section_subtitle">WhatsApp Business is always protected. Add extra packages if needed.</string>
+    <string name="custom_package_hint">com.example.app</string>
+    <string name="required_whatsapp_business">WhatsApp Business (required)</string>
+    <string name="optional_apps">Optional additional apps</string>
 </resources>

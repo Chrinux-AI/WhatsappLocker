@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WhatsApp Web Locker</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <style>
+    body { font-family: sans-serif; max-width: 420px; margin: 2rem auto; padding: 1rem; }
+    input, button { width: 100%; margin-top: .5rem; padding: .7rem; }
+  </style>
+</head>
+<body>
+  <h2>WhatsApp Web PIN Gate</h2>
+  <p>Client-side guard before redirecting to web.whatsapp.com.</p>
+  <input id="pin" type="password" placeholder="Set/Enter PIN" />
+  <button id="savePin">Save PIN</button>
+  <button id="unlock">Unlock WhatsApp Web</button>
+  <script src="app.js"></script>
+</body>
+</html>

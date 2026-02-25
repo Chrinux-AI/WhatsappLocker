@@ -1,40 +1,55 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Ensure we exit on failure
-set -e
+MODE="${1:-all}"
+case "$MODE" in
+  debug)
+    TASKS=(assembleDebug)
+    ;;
+  release)
+    TASKS=(assembleRelease)
+    ;;
+  all)
+    TASKS=(assembleDebug assembleRelease)
+    ;;
+  *)
+    echo "Usage: ./build.sh [debug|release|all]"
+    exit 1
+    ;;
+esac
 
-echo "======================================"
-echo " Building WhatsApp Locker Android App "
-echo "======================================"
-
-# Check if gradlew exists, else use globally installed gradle
-if [ -f "./gradlew" ]; then
-    echo "Using local gradle wrapper..."
-    chmod +x ./gradlew
-    ./gradlew assembleDebug
-else
-    echo "Using system gradle..."
-    gradle assembleDebug
+JAVA_MAJOR=$(java -version 2>&1 | sed -n '1s/.*version "\([0-9]*\).*/\1/p')
+if [[ -z "${JAVA_MAJOR}" ]]; then
+  JAVA_MAJOR=0
 fi
 
-echo ""
-echo "======================================"
-echo " Installing APK on connected device   "
-echo "======================================"
+if [[ ${JAVA_MAJOR} -gt 21 || ${JAVA_MAJOR} -lt 17 ]]; then
+  echo "Detected unsupported Java runtime (${JAVA_MAJOR}). Bootstrapping JDK 17..."
+  ./scripts/bootstrap_jdk17.sh
+  export JAVA_HOME="$(cd .jdk17 && pwd)"
+  export PATH="$JAVA_HOME/bin:$PATH"
+  java -version
+fi
 
-if command -v adb &> /dev/null; then
-    # Try installing the APK
-    APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
-    if [ -f "$APK_PATH" ]; then
-        adb install -r "$APK_PATH"
-        echo "Installation successful!"
+echo "Building WhatsApp Business Locker with tasks: ${TASKS[*]}"
+chmod +x ./gradlew
+./gradlew "${TASKS[@]}"
 
-        echo "Launching the app..."
-        adb shell am start -n com.example.whatsapplocker/.MainActivity
-    else
-        echo "Error: APK not found at $APK_PATH"
-    fi
+DEBUG_APK="app/build/outputs/apk/debug/app-debug.apk"
+RELEASE_APK="app/build/outputs/apk/release/app-release-unsigned.apk"
+
+echo "APK outputs:"
+[[ -f "$DEBUG_APK" ]] && echo " - $DEBUG_APK"
+[[ -f "$RELEASE_APK" ]] && echo " - $RELEASE_APK"
+
+./scripts/generate_apk_list.sh
+
+if command -v adb >/dev/null 2>&1; then
+  if [[ -f "$DEBUG_APK" ]]; then
+    echo "Installing debug via ADB..."
+    adb install -r "$DEBUG_APK" || true
+    adb shell monkey -p com.example.whatsapplocker -c android.intent.category.LAUNCHER 1 || true
+  fi
 else
-    echo "Notice: adb is not installed or not in PATH. Please install manually to your device."
-    echo "Compiled APK is at: app/build/outputs/apk/debug/app-debug.apk"
+  echo "ADB not found. Install manually from generated APK files."
 fi
