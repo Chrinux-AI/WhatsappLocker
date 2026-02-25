@@ -1,0 +1,18 @@
+{
+  "appId": "com.example.whatsapplocker",
+  "generatedAt": "2026-02-25T00:51:31Z",
+  "apks": [
+    {
+      "name": "debug",
+      "path": "app/build/outputs/apk/debug/app-debug.apk",
+      "sizeBytes": 0,
+      "notes": "Best for quick install/testing"
+    },
+    {
+      "name": "release-unsigned",
+      "path": "app/build/outputs/apk/release/app-release-unsigned.apk",
+      "sizeBytes": 0,
+      "notes": "For signing/distribution workflow"
+    }
+  ]
+}

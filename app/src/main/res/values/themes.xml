@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.WhatsappLocker" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <style name="Theme.WhatsappLocker" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryVariant">@color/primary_dark</item>
         <item name="colorOnPrimary">@color/white</item>
         <item name="colorSecondary">@color/accent</item>
+        <item name="android:statusBarColor">@color/primary_dark</item>
+        <item name="android:windowBackground">@color/surface_alt</item>
     </style>
 
-    <style name="Theme.WhatsappLocker.NoActionBar.FullScreen" parent="Theme.MaterialComponents.Light.NoActionBar">
+    <style name="Theme.WhatsappLocker.NoActionBar.FullScreen" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>
         <item name="android:windowFullscreen">true</item>
-        <item name="android:windowBackground">@color/black</item>
+        <item name="android:statusBarColor">@color/primary_dark</item>
+        <item name="android:windowBackground">@color/surface_alt</item>
     </style>
 </resources>

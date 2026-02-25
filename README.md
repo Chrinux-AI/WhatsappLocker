@@ -1,105 +1,113 @@
-# WhatsApp Business Locker - Android Native App
+# WhatsApp Business Locker (Android)
 
-This is a complete, production-ready WhatsApp Business chat locker and general app locker. Built primarily in **Kotlin**, it natively integrates with the Android SDK for bulletproof app launch detection.
+This repo is focused on **WhatsApp Business locking first** (`com.whatsapp.w4b`) with optional additional app locking.
 
-## Features
-- **App Detection:** Monitors the foreground activity to detect when WhatsApp Business (or any arbitrary app) is launched.
-- **Secure Storage:** All PIN/password mechanisms encrypt locally using Android Jetpack Security (`EncryptedSharedPreferences`).
-- **No-Bypass Lock Screen:** The overlay securely intercepts the back button and navigation attempts, sending users to the launcher instead of bypassing.
-- **Dynamic Configuration:** Quickly select or explicitly type in app packages to lock via the dashboard (`MainActivity`).
-
----
-
-## Technical Implementation Details
-The codebase is modularized correctly into key components:
-- `MainActivity.kt`: Dashboard logic to toggle functionality, manage permissions, select apps, and set a PIN.
-- `LockService.kt`: A persistent Android Foreground Service leveraging `UsageStatsManager` polling securely for real-time app launch detection.
-- `LockActivity.kt`: Full-screen singleInstance activity acting as the overlay firewall before granting access.
-- `SecurityUtil.kt`: Security logic tying to EncryptedSharedPreferences for hashed PIN comparison.
+## What you get
+- WhatsApp Business launch detection + lock screen challenge.
+- PIN / Password / Pattern credential modes.
+- Timeout-based temporary unlock.
+- Encrypted credential storage (Keystore + EncryptedSharedPreferences).
+- Debug + release APK build workflow.
+- Web-download friendly APK list (`web-apk/apk-list.json`) generated automatically.
 
 ---
 
-## 🚀 Build, Install & Test (PC Workflow)
+## Termux “run am” (clone + build + install flow)
 
-### Method 1: Automated Script
+If you want one command style for Termux, run this exactly:
+
 ```bash
-# Clone the repository
-git clone https://github.com/Chrinux-AI/WhatsappLocker.git
+pkg update -y && pkg install -y git
+
+git clone https://github.com/YOUR_USERNAME/WhatsappLocker.git
 cd WhatsappLocker
-
-# Run the build & install script
-chmod +x build.sh
-./build.sh
+chmod +x scripts/termux_run_ham.sh
+./scripts/termux_run_ham.sh https://github.com/YOUR_USERNAME/WhatsappLocker.git WhatsappLocker
 ```
 
-### Method 2: Manual Gradle Commands
-```bash
-# Debug Build
-./gradlew assembleDebug
-
-# Output APK path:
-# app/build/outputs/apk/debug/app-debug.apk
-
-# Install via ADB:
-adb install app/build/outputs/apk/debug/app-debug.apk
-```
+What it does:
+1. Installs Termux dependencies.
+2. Clones your GitHub repo.
+3. Builds debug + release APK.
+4. Copies debug APK to `/sdcard/Download/WhatsappBusinessLocker-debug.apk`.
+5. Gives direct install options (tap APK or adb install).
 
 ---
 
-## 📱 PC-Free / Phone-First Workflows
+## Build APK (PC)
 
-If your desktop dies or you are restricted to your Android smartphone, you can fully compile and deploy this app directly.
-
-### Method 1: Cloud Build via GitHub Actions (Recommended)
-This repository is configured with a **GitHub Actions CI Pipeline**.
-1. Sync/Push this code to your GitHub repo.
-2. Go to the **Actions** tab on your GitHub repository page from your phone browser.
-3. Select "Android CI" and trigger a manual workflow build, or simply push a commit.
-4. When the run finishes (takes ~2 minutes), scroll down to **Artifacts** and download `WhatsappLocker-APK.zip`.
-5. Extract the ZIP on your phone using any file manager and tap `app-debug.apk` to install!
-
-### Method 2: Termux Local Compilation
-You can compile this code directly on your Android phone using Termux.
-1. Install [Termux](https://termux.dev/) and open it.
-2. Run the environment setup:
+### One command (recommended)
 ```bash
-pkg update && pkg upgrade
-pkg install git openjdk-17
+./build.sh            # builds debug + release + apk list
+./build.sh debug      # debug only
+./build.sh release    # release only
 ```
-3. Clone and build:
+
+### Manual Gradle
 ```bash
-git clone https://github.com/Chrinux-AI/WhatsappLocker.git
-cd WhatsappLocker
 chmod +x gradlew
-./gradlew assembleDebug
+./gradlew assembleDebug assembleRelease
+./scripts/generate_apk_list.sh
 ```
-4. Find your APK and install:
-The compiled APK will be at `app/build/outputs/apk/debug/app-debug.apk`. Copy it to your internal storage to install.
+
+APK files:
+- `app/build/outputs/apk/debug/app-debug.apk`
+- `app/build/outputs/apk/release/app-release-unsigned.apk`
+- `web-apk/apk-list.json`
 
 ---
 
-## User Testing Plan
+## Install from web (APK form)
 
-### 1. WhatsApp Business Lock Test
-- Open `WhatsappLocker`.
-- Toggle the `WhatsApp Business` checkbox.
-- Tap `Set PIN` and configure `1234`.
-- Enable the App Locker via the toggle switch. Ensure permissions are granted.
-- Hit the home screen. Tap on WhatsApp Business.
-- **EXPECTED:** The PIN screen immediately blocks the chat interface. Enter `1234` to unlock.
+1. Push code to your fork on GitHub.
+2. Open **Actions → Android CI**.
+3. Run workflow (or push commit).
+4. Download artifacts:
+   - `WhatsappBusinessLocker-debug-apk`
+   - `WhatsappBusinessLocker-release-unsigned-apk`
+   - `WhatsappBusinessLocker-web-apk-list`
+5. Transfer APK to Android and tap install.
 
-### 2. Bypass / Rotation Protection
-- Launch WhatsApp Business to trigger the Lock Screen.
-- Try swiping back or hitting device hardware Back buttons.
-- **EXPECTED:** `LockActivity.kt` intercepts standard callbacks and kicks you to the device Home Screen without bypassing.
-
-### 3. Idle / Timeout Relock
-- Launch a secured app, provide your PIN, and use it.
-- Leave the app (hit Home or switch apps) so another application comes to the foreground.
-- Return to the secured app.
-- **EXPECTED:** `LockService` cleared the temporary authorization and forces the Lock Screen PIN prompt again.
+The `web-apk` artifact includes:
+- `index.html` (human-readable page)
+- `apk-list.json` (machine-readable list of APK outputs)
 
 ---
 
-*(Note: Web App versions (PWAs) are fundamentally restricted by standard browser security sandboxing mechanisms and cannot monitor the Android OS task list to build an overlay tracker. Therefore this solution strictly relies on Native Android components).*
-# WhatsappLocker
+## ADB install commands
+
+### USB
+```bash
+adb devices
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+### Wireless
+```bash
+adb tcpip 5555
+adb connect <PHONE_IP>:5555
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+---
+
+## WhatsApp Business setup checklist
+
+1. Install WhatsApp Business on your phone.
+2. Open WhatsApp Business Locker.
+3. Grant Usage Access and Overlay permissions.
+4. Set lock credential and timeout.
+5. Enable locker.
+6. Launch WhatsApp Business and verify lock screen appears.
+
+---
+
+## Push to your GitHub fork
+
+```bash
+git checkout -b feat/termux-run-ham
+git remote set-url origin https://github.com/YOUR_USERNAME/WhatsappLocker.git
+git push -u origin feat/termux-run-ham
+```
+
+Use GitHub PAT for HTTPS authentication, or change remote to SSH.

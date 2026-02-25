@@ -1,73 +1,83 @@
 package com.example.whatsapplocker
 
-import android.app.AppOpsManager
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.example.whatsapplocker.security.SecurityUtils
+import com.example.whatsapplocker.utils.PermissionUtils
 import com.google.android.material.switchmaterial.SwitchMaterial
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var switchLocker: SwitchMaterial
+    private lateinit var spinnerMethod: Spinner
+    private lateinit var etTimeoutSeconds: EditText
+
     private lateinit var cbWhatsappBusiness: CheckBox
-    private lateinit var cbWhatsapp: CheckBox
-    private lateinit var cbInstagram: CheckBox
     private lateinit var etCustomApp: EditText
-    private lateinit var btnAddApp: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        SecurityUtil.init(this)
         setContentView(R.layout.activity_main)
+        SecurityUtils.init(this)
 
         switchLocker = findViewById(R.id.switchLocker)
+        spinnerMethod = findViewById(R.id.spinnerMethod)
+        etTimeoutSeconds = findViewById(R.id.etTimeoutSeconds)
         cbWhatsappBusiness = findViewById(R.id.cbWhatsappBusiness)
-        cbWhatsapp = findViewById(R.id.cbWhatsapp)
-        cbInstagram = findViewById(R.id.cbInstagram)
         etCustomApp = findViewById(R.id.etCustomApp)
-        btnAddApp = findViewById(R.id.btnAddApp)
 
-        findViewById<Button>(R.id.btnPermissions).setOnClickListener {
-            requestPermissionsIfNeeded()
+        bindLockMethodSpinner()
+        bindLockedApps()
+        bindSwitch()
+
+        etTimeoutSeconds.setText((SecurityUtils.getTimeoutMs() / 1000).toString())
+
+        findViewById<Button>(R.id.btnPermissions).setOnClickListener { requestPermissionsIfNeeded() }
+        findViewById<Button>(R.id.btnSetCredential).setOnClickListener { showSetCredentialDialog() }
+        findViewById<Button>(R.id.btnSaveTimeout).setOnClickListener { saveTimeout() }
+        findViewById<Button>(R.id.btnAddApp).setOnClickListener { addCustomApp() }
+    }
+
+    private fun bindLockMethodSpinner() {
+        val methods = listOf(
+            SecurityUtils.LockMethod.PIN to "PIN",
+            SecurityUtils.LockMethod.PASSWORD to "Password",
+            SecurityUtils.LockMethod.PATTERN to "Pattern (e.g. 1-2-3-6)"
+        )
+        spinnerMethod.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, methods.map { it.second })
+        spinnerMethod.setSelection(methods.indexOfFirst { it.first == SecurityUtils.getLockMethod() }.coerceAtLeast(0))
+    }
+
+    private fun bindLockedApps() {
+        val locked = SecurityUtils.getLockedApps()
+        val requiredPackage = "com.whatsapp.w4b"
+        if (!locked.contains(requiredPackage)) {
+            SecurityUtils.addLockedApp(requiredPackage)
         }
+        cbWhatsappBusiness.isChecked = true
+    }
 
-        findViewById<Button>(R.id.btnSetPin).setOnClickListener {
-            showSetPinDialog()
-        }
-
-        switchLocker.isChecked = SecurityUtil.isLockEnabled()
-        switchLocker.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked && !SecurityUtil.hasPin()) {
+    private fun bindSwitch() {
+        switchLocker.isChecked = SecurityUtils.isLockEnabled()
+        switchLocker.setOnCheckedChangeListener { _, enabled ->
+            if (enabled && !validateBeforeEnable()) {
                 switchLocker.isChecked = false
-                Toast.makeText(this, "Set a PIN first!", Toast.LENGTH_SHORT).show()
                 return@setOnCheckedChangeListener
             }
-            if (isChecked && !hasUsageStatsPermission(this)) {
-                switchLocker.isChecked = false
-                Toast.makeText(this, "Grant Usage Access Permission!", Toast.LENGTH_SHORT).show()
-                requestPermissionsIfNeeded()
-                return@setOnCheckedChangeListener
-            }
-            if (isChecked && !Settings.canDrawOverlays(this)) {
-                switchLocker.isChecked = false
-                Toast.makeText(this, "Grant Overlay Permission!", Toast.LENGTH_SHORT).show()
-                requestPermissionsIfNeeded()
-                return@setOnCheckedChangeListener
-            }
-
-            SecurityUtil.setLockEnabled(isChecked)
-
+            SecurityUtils.setLockEnabled(enabled)
             val intent = Intent(this, LockService::class.java)
-            if (isChecked) {
+            if (enabled) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     startForegroundService(intent)
                 } else {
@@ -77,90 +87,91 @@ class MainActivity : AppCompatActivity() {
                 stopService(intent)
             }
         }
-
-        setupCheckboxes()
-
-        btnAddApp.setOnClickListener {
-            val pkg = etCustomApp.text.toString().trim()
-            if (pkg.isNotEmpty()) {
-                SecurityUtil.addLockedApp(pkg)
-                etCustomApp.text.clear()
-                Toast.makeText(this, "Added $pkg", Toast.LENGTH_SHORT).show()
-            }
-        }
     }
 
-    private fun setupCheckboxes() {
-        val lockedApps = SecurityUtil.getLockedApps()
-
-        cbWhatsappBusiness.isChecked = lockedApps.contains("com.whatsapp.w4b")
-        cbWhatsapp.isChecked = lockedApps.contains("com.whatsapp")
-        cbInstagram.isChecked = lockedApps.contains("com.instagram.android")
-
-        val listener = { view: android.view.View ->
-            val pkg = when (view.id) {
-                R.id.cbWhatsappBusiness -> "com.whatsapp.w4b"
-                R.id.cbWhatsapp -> "com.whatsapp"
-                R.id.cbInstagram -> "com.instagram.android"
-                else -> ""
-            }
-            val cb = view as CheckBox
-            if (cb.isChecked) {
-                SecurityUtil.addLockedApp(pkg)
-            } else {
-                SecurityUtil.removeLockedApp(pkg)
-            }
+    private fun validateBeforeEnable(): Boolean {
+        if (!SecurityUtils.hasCredential()) {
+            Toast.makeText(this, getString(R.string.error_set_credential), Toast.LENGTH_SHORT).show()
+            return false
         }
-
-        cbWhatsappBusiness.setOnClickListener(listener)
-        cbWhatsapp.setOnClickListener(listener)
-        cbInstagram.setOnClickListener(listener)
+        if (!PermissionUtils.hasUsageStatsPermission(this) || !PermissionUtils.hasOverlayPermission(this)) {
+            Toast.makeText(this, getString(R.string.error_grant_permissions), Toast.LENGTH_SHORT).show()
+            requestPermissionsIfNeeded()
+            return false
+        }
+        return true
     }
 
-    private fun showSetPinDialog() {
-        val input = EditText(this)
-        input.inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
-        input.hint = "Enter 4-8 digit PIN"
+    private fun showSetCredentialDialog() {
+        val input = EditText(this).apply {
+            hint = when (selectedLockMethod()) {
+                SecurityUtils.LockMethod.PATTERN -> "e.g. 1-2-3-6"
+                SecurityUtils.LockMethod.PASSWORD -> "Min 6 characters"
+                SecurityUtils.LockMethod.PIN -> "4-8 digit PIN"
+            }
+        }
 
         AlertDialog.Builder(this)
-            .setTitle("Set Locker PIN")
+            .setTitle(getString(R.string.set_lock_credential))
             .setView(input)
-            .setPositiveButton("Save") { _, _ ->
-                val pin = input.text.toString()
-                if (pin.length >= 4) {
-                    SecurityUtil.savePin(pin)
-                    Toast.makeText(this, "PIN Saved Successfully", Toast.LENGTH_SHORT).show()
+            .setPositiveButton(R.string.save) { _, _ ->
+                val value = input.text.toString().trim()
+                val method = selectedLockMethod()
+                if (isValidCredential(method, value)) {
+                    SecurityUtils.setCredential(value, method)
+                    Toast.makeText(this, R.string.credential_saved, Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(this, "PIN must be at least 4 digits", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, R.string.invalid_credential, Toast.LENGTH_SHORT).show()
                 }
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
-    private fun requestPermissionsIfNeeded() {
-        if (!hasUsageStatsPermission(this)) {
-            val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            startActivity(intent)
-            Toast.makeText(this, "Please enable Usage Access for WhatsApp Locker", Toast.LENGTH_LONG).show()
-        }
-
-        if (!Settings.canDrawOverlays(this)) {
-            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            startActivity(intent)
-            Toast.makeText(this, "Please allow drawing over other apps", Toast.LENGTH_LONG).show()
+    private fun selectedLockMethod(): SecurityUtils.LockMethod {
+        return when (spinnerMethod.selectedItemPosition) {
+            1 -> SecurityUtils.LockMethod.PASSWORD
+            2 -> SecurityUtils.LockMethod.PATTERN
+            else -> SecurityUtils.LockMethod.PIN
         }
     }
 
-    private fun hasUsageStatsPermission(context: Context): Boolean {
-        val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            appOps.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), context.packageName)
-        } else {
-            appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), context.packageName)
+    private fun isValidCredential(method: SecurityUtils.LockMethod, value: String): Boolean {
+        return when (method) {
+            SecurityUtils.LockMethod.PIN -> value.length in 4..8 && value.all { it.isDigit() }
+            SecurityUtils.LockMethod.PASSWORD -> value.length >= 6
+            SecurityUtils.LockMethod.PATTERN -> value.matches(Regex("[1-9](?:-[1-9]){3,}"))
         }
-        return mode == AppOpsManager.MODE_ALLOWED
+    }
+
+    private fun saveTimeout() {
+        val seconds = etTimeoutSeconds.text.toString().toLongOrNull()
+        if (seconds == null || seconds < 5) {
+            Toast.makeText(this, R.string.invalid_timeout, Toast.LENGTH_SHORT).show()
+            return
+        }
+        SecurityUtils.setTimeoutMs(seconds * 1000)
+        Toast.makeText(this, R.string.timeout_saved, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun addCustomApp() {
+        val pkg = etCustomApp.text.toString().trim()
+        if (pkg.isBlank() || !pkg.contains('.')) {
+            Toast.makeText(this, R.string.invalid_package, Toast.LENGTH_SHORT).show()
+            return
+        }
+        SecurityUtils.addLockedApp(pkg)
+        etCustomApp.text.clear()
+        Toast.makeText(this, getString(R.string.custom_app_added, pkg), Toast.LENGTH_SHORT).show()
+    }
+
+
+    private fun requestPermissionsIfNeeded() {
+        if (!PermissionUtils.hasUsageStatsPermission(this)) {
+            startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+        }
+        if (!PermissionUtils.hasOverlayPermission(this)) {
+            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+        }
     }
 }
